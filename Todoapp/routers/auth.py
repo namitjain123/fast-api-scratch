@@ -7,8 +7,8 @@ from sqlalchemy.orm import Session
 
 
 from datetime import timedelta, datetime, timezone
-from database import SessionLocal
-from models import Users
+from ..database import SessionLocal
+from ..models import Users
 from  passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError

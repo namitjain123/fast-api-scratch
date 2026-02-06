@@ -1,3 +1,10 @@
 venv/
 __pycache__/
 *.pyc
+notes.md
+main1.py
+main3.py
+alembic.ini
+alembic/   
+migrations/
+__init__.py
