@@ -76,7 +76,7 @@
             });
 
             if (response.ok) {
-                window.location.href = '/todos/todo-page'; // Redirect to the todo page
+                window.location.href = '/todos/todos-page'; // Redirect to the todo page
             } else {
                 // Handle error
                 const errorData = await response.json();
@@ -89,6 +89,9 @@
     });
 
         document.getElementById('deleteButton').addEventListener('click', async function () {
+            event.preventDefault(); // 🔥 stops form submission
+
+            
             var url = window.location.pathname;
             const todoId = url.substring(url.lastIndexOf('/') + 1);
 
@@ -107,7 +110,7 @@
 
                 if (response.ok) {
                     // Handle success
-                    window.location.href = '/todos/todo-page'; // Redirect to the todo page
+                    window.location.href = '/todos/todos-page'; // Redirect to the todo page
                 } else {
                     // Handle error
                     const errorData = await response.json();

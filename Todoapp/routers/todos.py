@@ -55,6 +55,8 @@ async def render_todos_page(
     user: user_dependency,   # ✅ this will call get_current_user automatically
     db: db_dependency
 ):
+    if user is None:
+        return RedirectResponse("/auth/login-page", status_code=302)
     todos = db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
     return template.TemplateResponse(
         "todos.html",
@@ -71,7 +73,32 @@ async def render_todo_page(
         {"request": request, "user": user}
     )
 
-  
+@router.get("/edit-todo-page/{todo_id}", status_code=status.HTTP_200_OK)
+async def render_edit_todo_page(
+    request: Request,
+    user: user_dependency,
+    db: db_dependency,
+    todo_id: int = Path(gt=0)
+):
+    todo_model = (
+        db.query(models.Todos)
+        .filter(models.Todos.id == todo_id)
+        .filter(models.Todos.owner_id == user.id)
+        .first()
+    )
+
+    if todo_model is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Todo with the id {todo_id} is not available"
+        )
+
+    return template.TemplateResponse(
+        "edit-todo.html",
+        {"request": request, "todo": todo_model, "user": user}
+    )
+
+
 
 
 
