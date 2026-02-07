@@ -1,0 +1,78 @@
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+from types import SimpleNamespace
+
+from Todoapp.main import app
+from Todoapp.database import Base
+from Todoapp.models import Todos
+from Todoapp.routers.todos import get_db, get_current_user
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./testdb.db"
+
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create tables once for the test DB
+Base.metadata.create_all(bind=engine)
+
+
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def override_get_current_user():
+    # Must return an object (not dict) because your code uses current_user.id
+    return SimpleNamespace(id=1, username="namit", role="admin")
+
+
+@pytest.fixture(scope="session")
+def client():
+    # Override dependencies once per test session
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = override_get_current_user
+    return TestClient(app)
+
+
+@pytest.fixture
+def db():
+    """Gives a DB session for direct DB checks in tests."""
+    session = TestingSessionLocal()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
+@pytest.fixture(autouse=True)
+def seed_and_cleanup():
+    """Seeds 1 todo before each test and cleans the table after."""
+    session = TestingSessionLocal()
+    todo = Todos(
+        id=1,
+        title="Test Todo",
+        description="This is a test todo",
+        priority=3,
+        complete=False,
+        owner_id=1,
+    )
+    session.add(todo)
+    session.commit()
+    session.close()
+
+    yield
+
+    with engine.connect() as connection:
+        connection.execute(text("DELETE FROM todos"))
+        connection.commit()

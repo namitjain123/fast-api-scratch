@@ -1,7 +1,7 @@
 
 from quopri import encode
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException,status
+from fastapi import APIRouter, Depends, HTTPException,status,Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,7 @@ from ..models import Users
 from  passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
+from fastapi.templating import Jinja2Templates
 router= APIRouter(
     prefix="/auth",
     tags=["auth"]
@@ -26,7 +27,7 @@ class CreateUserRequest(BaseModel):
     username: str = Field(..., example="johndoe")
     first_name: str = Field(..., example="John")
     last_name: str = Field(..., example="Doe")
-    hashed_password: str = Field(..., example="hashed_password_here")
+    password: str = Field(..., example="password")
     role: str = Field(..., example="user")
 
 class Token(BaseModel):
@@ -43,6 +44,21 @@ def get_db():
 
 
 db_dependency = Annotated[Session, Depends(get_db)]
+templates = Jinja2Templates(directory="Todoapp/templates")
+
+
+
+##pages ###
+@router.get("/login-page", status_code=status.HTTP_200_OK)
+def render_login_page(request: Request):
+    return templates.TemplateResponse("login.html", {"request": request})
+
+
+@router.get("/register-page", status_code=status.HTTP_200_OK)
+def render_register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
+
+##Endpoints ###
 
 def authenticate_user(db: Session, username: str, password: str):
     user = db.query(Users).filter(Users.username == username).first()
@@ -85,7 +101,7 @@ async def create_user(create_user_request: CreateUserRequest, db: db_dependency)
         username=create_user_request.username,
         first_name=create_user_request.first_name,
         last_name=create_user_request.last_name,
-        hashed_password=bcrypt_context.hash(create_user_request.hashed_password),
+        hashed_password=bcrypt_context.hash(create_user_request.password),
         role=create_user_request.role,
         is_active=True
     )
