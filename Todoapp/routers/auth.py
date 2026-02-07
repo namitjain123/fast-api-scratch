@@ -1,7 +1,7 @@
 
 from quopri import encode
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException,status,Request
+from fastapi import APIRouter, Depends, HTTPException,status,Request, Header, Cookie
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -21,7 +21,8 @@ router= APIRouter(
 SECRET_KEY = "d761a848bcec94d7a6a61da010e8e7b9d396c28124d0ce44c67e10247d0d83c7"
 ALGORITHM = "HS256"
 bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token", auto_error=False)
+
 class CreateUserRequest(BaseModel):
     email: str = Field(..., example="user@example.com")
     username: str = Field(..., example="johndoe")
@@ -74,25 +75,49 @@ def create_access_token(username:str,user_id:int,role:str,expires_delta: timedel
     to_encode.update({"exp": expires})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: Session = Depends(get_db)):
+def get_token_from_request(
+    header_token: str | None = Depends(oauth2_bearer),   # ✅ enables Swagger Authorize
+    access_token: str | None = Cookie(default=None),     # ✅ enables browser cookie auth
+) -> str | None:
+    # 1) If Swagger/API sends Authorization: Bearer <token>
+    if header_token:
+        return header_token
+
+    # 2) Else fallback to cookie from browser
+    return access_token
+
+
+async def get_current_user(
+    token: str | None = Depends(get_token_from_request),
+    db: Session = Depends(get_db),
+):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    if not token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         user_id: int = payload.get("user_id")
         role: str = payload.get("role")
-        if username is None or user_id is None or role is None :
+
+        if username is None or user_id is None or role is None:
             raise credentials_exception
+
     except JWTError:
         raise credentials_exception
+
     user = db.query(Users).filter(Users.username == username).first()
     if user is None:
         raise credentials_exception
-    return user   
+
+    return user
+
 
 @router.post("/",status_code=status.HTTP_201_CREATED)
 async def create_user(create_user_request: CreateUserRequest, db: db_dependency):
@@ -114,7 +139,7 @@ async def create_user(create_user_request: CreateUserRequest, db: db_dependency)
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: db_dependency):
         user= authenticate_user(db, form_data.username, form_data.password)
         if not user:
-            return {"error": "Invalid username or password"}
+              raise HTTPException(status_code=401, detail="Invalid username or password")
         
         token= create_access_token(user.username, user.id, user.role, timedelta(minutes=30)    )
         return {"access_token": token, "token_type": "bearer"}

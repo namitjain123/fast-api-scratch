@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <div class="card text-center">
+        <div class="card-header">
+            <h1>Add New Todo</h1>
+        </div>
+        <div class="card-body">
+            <form id="todoForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="Enter title" required>
+</div>
+<div class="form-group">
+    <label>Description</label>
+    <textarea name="description" rows="3" class="form-control" placeholder="Enter description" required></textarea>
+</div>
+<div class="form-group">
+    <label>Priority</label>
+    <select name="priority" class="form-control" required>
+        <option >1</option>
+        <option >2</option>
+        <option >3</option>
+        <option >4</option>
+        <option >5</option>
+    </select>
+</div>
+<button type="submit" class="btn btn-primary mt-3">Add Todo</button>
+<a href="/todos/todo-page" class="btn btn-secondary mt-3">Cancel</a>
+            </form>
+        </div>
+    </div>
+    </div>
+    {% endblock %}

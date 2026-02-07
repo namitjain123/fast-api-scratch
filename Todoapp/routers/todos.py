@@ -49,25 +49,38 @@ def redirect_to_login():
 #Checks if the user is logged in
 #Fetches only that user’s todos
 #Renders the todos HTML page
-
+@router.get("/todos-page", status_code=status.HTTP_200_OK)
 async def render_todos_page(
     request: Request,
-     user: user_dependency,    
+    user: user_dependency,   # ✅ this will call get_current_user automatically
     db: db_dependency
 ):
-    try:
-        user= await get_current_user(request.cookies.get("access_token"))
-        if user is None:
-            return redirect_to_login()
-        todos=db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
-        return template.TemplateResponse(
+    todos = db.query(models.Todos).filter(models.Todos.owner_id == user.id).all()
+    return template.TemplateResponse(
         "todos.html",
-        {"request": request, "todos": todos,"user": user}
+        {"request": request, "todos": todos, "user": user}
     )
-    except:
-        return redirect_to_login()
+
+@router.get("/add-todo-page", status_code=status.HTTP_200_OK)
+async def render_todo_page(
+    request: Request,
+    user: user_dependency
+):
+    return template.TemplateResponse(
+        "add-todo.html",
+        {"request": request, "user": user}
+    )
+
+  
 
 
+
+
+
+
+
+
+#####Endpoints ###
 @router.get("/",status_code=status.HTTP_200_OK)
 def read_all(user: user_dependency, db: db_dependency):
     if user is None:
