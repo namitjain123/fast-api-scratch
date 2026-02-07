@@ -92,12 +92,8 @@ async def get_current_user(
     db: Session = Depends(get_db),
 ):
     
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
+    if not token:
+        return None
   
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -106,14 +102,13 @@ async def get_current_user(
         role: str = payload.get("role")
 
         if username is None or user_id is None or role is None:
-            raise credentials_exception
+            raise None
 
     except JWTError:
-        raise credentials_exception
+        raise None
 
     user = db.query(Users).filter(Users.username == username).first()
-    if user is None:
-        raise credentials_exception
+    
 
     return user
 
