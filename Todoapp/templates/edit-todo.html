@@ -1,0 +1,34 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container">
+    <div class="card text-center">
+        <div class="card-header">
+            <h1>Edit Todo</h1>
+        </div>
+        <div class="card-body">
+            <form id="editTodoForm">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" name="title" class="form-control" placeholder="Enter title" value="{{ todo.title }}" required>
+                    </div>
+                    <label>Description</label>
+                    <textarea name="description" rows="3" class="form-control" placeholder="Enter description" required>{{ todo.description }}</textarea>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select name="priority" class="form-control" required>
+                            <option value="1" {% if todo.priority == 1 %}selected{% endif %}>1</option>
+                            <option value="2" {% if todo.priority == 2 %}selected{% endif %}>2</option>
+                            <option value="3" {% if todo.priority == 3 %}selected{% endif %}>3</option>
+                            <option value="4" {% if todo.priority == 4 %}selected{% endif %}>4</option>
+                            <option value="5" {% if todo.priority == 5 %}selected{% endif %}>5</option>
+                        </select>
+                    </div>
+                    <div class="form-group form-check">
+                        <input type="checkbox" name="complete" class="form-check-input" id="completeCheck" {% if todo.complete %}checked{% endif %}>
+                        <label class="form-check-label" for="completeCheck">Complete</label>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Edit your todo</button>
+                <button id="deleteButton" type="button" class="btn btn-danger mt-3">Delete</button>
+                <a href="/todos/todos-page" class="btn btn-success">Cancel</a>
+                </div>
+                {% endblock %}
