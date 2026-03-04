@@ -1,5 +1,7 @@
 from typing import Annotated
 from fastapi import FastAPI, Depends, HTTPException, Path, status,Request
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+
 
 from .database import SessionLocal, engine
 from .models import Base

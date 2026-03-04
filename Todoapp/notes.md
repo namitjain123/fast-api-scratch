@@ -138,3 +138,7 @@ Browser
             └─ get_current_user
                   └─ user_dependency
                         └─ user available in route
+
+
+Namitj@123 ------ azure admin password
+ninjhahattori

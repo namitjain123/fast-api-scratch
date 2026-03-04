@@ -1,3 +1,6 @@
+    
+    console.log("base.js loaded");
+
     // Add Todo JS
     const todoForm = document.getElementById('todoForm');
     if (todoForm) {

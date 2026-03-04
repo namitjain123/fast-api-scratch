@@ -1,11 +1,15 @@
+import os
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-SQLALCHEMY_DATABASE_URL='postgresql://postgres:root@localhost:5434/TodoApplication'
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 
-engine= create_engine(
-    SQLALCHEMY_DATABASE_URL) 
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+engine = create_engine(
+    DATABASE_URL,
+    poolclass=NullPool,     # important for Supabase pooler
+    pool_pre_ping=True,
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
-
-
